@@ -15,7 +15,7 @@ public class DuckBot3 extends TeamRobot
     ScannedRobots targetedEnemy;
     double firepower = 1, midpointPower = 250, movingOffset = 0;
     boolean aggressiveMode = false;
-    int counter = 0;
+    int counter = 0; //LALALALALALA
 
     @Override
     public void run()
