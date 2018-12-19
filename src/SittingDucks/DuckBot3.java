@@ -139,7 +139,7 @@ public class DuckBot3 extends TeamRobot
                 yForce = Math.cos(enemyAbsoluteBearingRadians) * force + yForce;
             } else
             {
-                GravEnemy.alive = false;
+                GravEnemy.alive = false; //nicht mehr benötigt?
             }
         }
         distanceToMiddleXY = calcDistance(getX(), getY(), BattleFieldMidPointX, BattleFieldMidPointY);
@@ -356,4 +356,13 @@ public class DuckBot3 extends TeamRobot
             }
         }
     }
+    
+    public void onRobotDeath(RobotDeathEvent e) 
+    {
+        targets.get(e.getName()).alive = false;
+    }
+    
+    //noch hinzufügen: am Anfang auf einen Gegner festlegen (im aggressiveMode) evtl. leader, oder nicht leader
+    // gegner von 2 seiten beschießen
+    //evtl gibt leader gegner vor auf den geschossen werden soll
 }

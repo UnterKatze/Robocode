@@ -348,4 +348,9 @@ public class DuckBot4 extends TeamRobot
             }
         }
     }
+    
+    public void onRobotDeath(RobotDeathEvent e) 
+    {
+        targets.get(e.getName()).alive = false;
+    }
 }
