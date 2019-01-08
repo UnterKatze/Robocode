@@ -26,27 +26,12 @@ public class DuckBot4 extends TeamRobot
         targetedEnemy = new ScannedRobots();
         targetedEnemy.distance = 9999;
         targetedEnemy.alive = true;
-        
-        Color[] robotColors =
-        {
-            black, yellow, black, yellow, black
-        };    // body, gun, radar, bullets, scan-arc
-        
-        setColors(robotColors[0], robotColors[1], robotColors[2], robotColors[3], robotColors[4]); 
-        
         setAdjustGunForRobotTurn(true);
         setAdjustRadarForGunTurn(true);
         setAdjustRadarForRobotTurn(true); 
         
         turnRadarLeftRadians(2 * PI); 
-
-        try
-        {
-            broadcastMessage(robotColors); 
-        } catch (IOException ignored)
-        {
-        }
-
+        
         while (true)
         {
             if (getTime() % 20 == 0)
@@ -65,6 +50,19 @@ public class DuckBot4 extends TeamRobot
             calcShootingAngle();
             shoot();
             execute();
+        }
+    }
+    
+    @Override
+    public void onMessageReceived(MessageEvent e)
+    
+    {
+        if (e.getMessage() instanceof Color[])
+        
+        {
+            Color[] robotColors = (Color[]) e.getMessage();
+            setColors(robotColors[0], robotColors[1], robotColors[2], robotColors[3], robotColors[4]);  
+            // body, gun, radar, bullets, scan-arc
         }
     }
 
