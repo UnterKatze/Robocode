@@ -160,8 +160,9 @@ public class DuckBot4 extends TeamRobot
 
         for (int i = 0; i <= enemyNames.size() - 1; i++)
         {
-            GravEnemy = targets.get(targets.keySet().toArray()[i]);
-            if (((getTime() - GravEnemy.scanTime) <= 12) && GravEnemy.alive)
+            GravEnemy = targets.get(targets.keySet().toArray()[i]); 
+            //für gescannte und noch lebende Roboter wird ein Gravity-Point erzeugt
+            if (GravEnemy.alive)
             {
                 GravityPoint p = new GravityPoint();
                 p.pointX = GravEnemy.PresentX;
@@ -171,10 +172,11 @@ public class DuckBot4 extends TeamRobot
                 force = (p.strength * GravEnemy.calcPriority()) / Math.pow(GravEnemy.distance, 2);
                 xForce = Math.sin(enemyAbsoluteBearingRadians) * force + xForce;
                 yForce = Math.cos(enemyAbsoluteBearingRadians) * force + yForce;
-            } else
-            {
-                GravEnemy.alive = false; //nicht mehr benötigt?
             }
+//            } else
+//            {
+//                GravEnemy.alive = false; //nicht mehr benötigt?
+//            }
         }
         distanceToMiddleXY = calcDistance(getX(), getY(), BattleFieldMidPointX, BattleFieldMidPointY);
         distanceToTeammate = calcDistance(getX(), getY(), Teammate.PresentX, Teammate.PresentY);
