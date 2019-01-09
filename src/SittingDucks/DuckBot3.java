@@ -15,6 +15,7 @@ public class DuckBot3 extends TeamRobot
     ScannedRobots targetedEnemy;
     double firepower = 1, midpointPower = 250, movingOffset = 0;
     boolean aggressiveMode = false;
+    boolean teamMateAlive = true;
     int counter = 0;
     double turnAwayDegrees = 90;
     int scanDirection = 1;
@@ -55,7 +56,7 @@ public class DuckBot3 extends TeamRobot
 //              offset wird für verschieden weit zurückzulegende Distanzen, bspw bei Zusammenstoß mit anderen Bots verändert, 
 //              nach 20 Ticks wird er wieder auf 0 gesetzt
             }
-            aggressiveMode = ((getOthers() <= 3) && (getTeammates().length == 1));
+            aggressiveMode = ((getOthers() <= 3) && teamMateAlive);
 //              wenn nur noch 2 oder weniger Gegner in der Arena sind
 //              und beide Teamkollegen am Leben sind,
 //              wird in einen aggresiven Modus umgeschaltet
@@ -405,7 +406,12 @@ public class DuckBot3 extends TeamRobot
     @Override
     public void onRobotDeath(RobotDeathEvent e) 
     {
-        targets.get(e.getName()).alive = false;
+         if (isTeammate(e.getName()))
+                {
+                    teamMateAlive = false;
+                }
+        
+         targets.get(e.getName()).alive = false;
     }
     
     
