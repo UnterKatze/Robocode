@@ -69,10 +69,6 @@ public class DuckBot4 extends TeamRobot
     @Override
     public void onScannedRobot(ScannedRobotEvent e)
     {
-        if (isTeammate(e.getName())==false)
-        {
-            scanDirection = -scanDirection;
-        }
         ScannedRobots ScEnemy = new ScannedRobots();
         if (targets.containsKey(e.getName()))
         {
@@ -105,23 +101,7 @@ public class DuckBot4 extends TeamRobot
 
     private void scanForEnemys()
     {
-        if (aggressiveMode)
-        {
-            if (getTime() % 20 == 0 ) 
-            {
-                setTurnRadarRightRadians(2 * PI);    
-            }
-            else
-            {
-                setTurnRadarRightRadians(0.25*PI*scanDirection);
-//              einen Gegner mit dem Radar verfolgen, wenn <2 Gegner im Spiel sind
-            }
-        }
-        else
-        {
-            setTurnRadarRightRadians(2 * PI); 
-        }
-
+        setTurnRadarRightRadians(2 * PI); 
     }
 
     private void calcFirePower()
@@ -173,10 +153,6 @@ public class DuckBot4 extends TeamRobot
                 xForce = Math.sin(enemyAbsoluteBearingRadians) * force + xForce;
                 yForce = Math.cos(enemyAbsoluteBearingRadians) * force + yForce;
             }
-//            } else
-//            {
-//                GravEnemy.alive = false; //nicht mehr benötigt?
-//            }
         }
         distanceToMiddleXY = calcDistance(getX(), getY(), BattleFieldMidPointX, BattleFieldMidPointY);
         distanceToTeammate = calcDistance(getX(), getY(), Teammate.PresentX, Teammate.PresentY);
