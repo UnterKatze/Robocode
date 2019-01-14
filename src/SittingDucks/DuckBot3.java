@@ -72,14 +72,17 @@ public class DuckBot3 extends TeamRobot
     @Override
     public void onScannedRobot(ScannedRobotEvent e)
     {
+        // für aimlock in AgressiveMode
         if (isTeammate(e.getName())==false)
         {
             scanDirection = -scanDirection;
         }
+        
         ScannedRobots ScEnemy = new ScannedRobots();
         if (targets.containsKey(e.getName()))
         {
-            ScEnemy = targets.get(e.getName());
+            ScEnemy = targets.get(e.getName()); 
+            //pointer auf scEnemy, (wenn ScEnemy aktualisiert wird, werden auch die Werte in der Hashmap aktualisiert
         } else
         {
             targets.put(e.getName(), ScEnemy);
@@ -95,6 +98,7 @@ public class DuckBot3 extends TeamRobot
         ScEnemy.relativeBearingRadians = e.getBearingRadians();
         ScEnemy.calcAbsoluteBearingRadians(getHeadingRadians());
         ScEnemy.calcPresentXY(getX(), getY());
+        //werte werden durch verlinkung direkt auch in Hashmap für entsprechenen Robot aktualisiert
         
         if ((ScEnemy.distance <= targetedEnemy.distance || (targetedEnemy.alive == false)) && ScEnemy.isEnemy)
         {
@@ -116,7 +120,7 @@ public class DuckBot3 extends TeamRobot
             }
             else
             {
-                setTurnRadarRightRadians(0.25*PI*scanDirection);
+                setTurnRadarRightRadians(0.20*PI*scanDirection);
 //              einen Gegner mit dem Radar verfolgen, wenn <2 Gegner im Spiel sind
             }
         }
@@ -153,36 +157,44 @@ public class DuckBot3 extends TeamRobot
     {
         ScannedRobots GravEnemy;
         ScannedRobots Teammate;
-        Teammate = targets.get(getTeammates()[0]);
+        
+        Teammate = targets.get(getTeammates()[0]); //teammate wird doppelt in gravitypoint-berechnung mit einbezogen?
+        
         double xForce = 0, yForce = 0, force, forceOnTeammate;
+        
         double enemyAbsoluteBearingRadians, movingAngleRadians, movingAngleDegrees;
+        
         final double BattleFieldMidPointX = getBattleFieldWidth() / 2;
         final double BattleFieldMidPointY = getBattleFieldHeight() / 2;
+        
         double[] distanceToMiddleXY, distanceToTeammate;
-        Set enemyNames = targets.keySet();
+        
+        Set enemyNames = targets.keySet(); //liste der Enemynames
 
-        for (int i = 0; i <= enemyNames.size() - 1; i++)
+        //für jeden noch lebenden Robot wird ein GravityPoint erstellt 
+        for (int i = 0; i <= enemyNames.size() - 1; i++) 
         {
             GravEnemy = targets.get(targets.keySet().toArray()[i]);
-            if (GravEnemy.alive)
+            
+            if (GravEnemy.alive) 
             {
                 GravityPoint p = new GravityPoint();
                 p.pointX = GravEnemy.PresentX;
                 p.pointY = GravEnemy.PresentY;
                 p.strength = -1250;
+                
                 enemyAbsoluteBearingRadians = GravEnemy.absoluteBearingRadians;
-                force = (p.strength * GravEnemy.calcPriority()) / Math.pow(GravEnemy.distance, 2);
-                xForce = Math.sin(enemyAbsoluteBearingRadians) * force + xForce;
+                
+                force = (p.strength * GravEnemy.calcPriority()) / Math.pow(GravEnemy.distance, 2); //stärke nimmt bei größerer Entfernung ab, hängt ab von energy des gegners
+                xForce = Math.sin(enemyAbsoluteBearingRadians) * force + xForce; //kraft in x und y--Richtung wird für abhängig von jedem Gegner berechnet und aufaddiert
                 yForce = Math.cos(enemyAbsoluteBearingRadians) * force + yForce;
             }
-//            } else
-//            {
-//                GravEnemy.alive = false; //nicht mehr benötigt?
-//            }
         }
-        distanceToMiddleXY = calcDistance(getX(), getY(), BattleFieldMidPointX, BattleFieldMidPointY);
+        
+        distanceToMiddleXY = calcDistance(getX(), getY(), BattleFieldMidPointX, BattleFieldMidPointY); 
         distanceToTeammate = calcDistance(getX(), getY(), Teammate.PresentX, Teammate.PresentY);
-
+        //arrays mit deltaX, deltaY und direktem Abstand
+        
         counter++;
         if (counter >= 10)
         {
@@ -195,17 +207,22 @@ public class DuckBot3 extends TeamRobot
 
         if (aggressive)
         {
+            //unser Robot wird von den Gegnern angezogen, anstatt abgestoßen
             xForce = -xForce;
             yForce = -yForce;
             force = force / 4;
         }
-
+        
+        //abstoßung von Mittelpunkt wird zu errechnetem Wert hinzugefügt
         xForce = xForce + force * (BattleFieldMidPointX - getX());
         yForce = yForce + force * (BattleFieldMidPointY - getY());
-
+        
+        //abstoßung von Teammate wird hinzugefügt
         xForce = xForce + forceOnTeammate * (Teammate.PresentX - getX());
         yForce = yForce + forceOnTeammate * (Teammate.PresentY - getY());
 
+        //wenn der Robot einer Wand zu nahe kommt wird der Kraft eine Komponente in X- bzw in Y-Richtung hinzugefügt, die von der Wand weggerichtet ist
+        //je näher der Robot zur Wand ist desto stärker wird er abgestoßen
         if (getX() < 150)
         {
             xForce = xForce + 3000 / Math.pow(getX(), 2);
@@ -225,7 +242,8 @@ public class DuckBot3 extends TeamRobot
         {
             yForce = yForce - 3000 / Math.pow(getBattleFieldHeight() - getY(), 2);
         }
-
+        
+        //aus den X- und Y-Kompenten wird ein ein Winkel für die Bewegungsrichtung des Robots ausgerechnet 
         movingAngleRadians = normaliseAngle(xForce, yForce);
         movingAngleDegrees = Math.toDegrees(movingAngleRadians);
 
@@ -235,7 +253,7 @@ public class DuckBot3 extends TeamRobot
     @Override
     public void onHitRobot(HitRobotEvent e)
     {
-        turnAwayDegrees = -turnAwayDegrees;
+       // turnAwayDegrees = -turnAwayDegrees;
         //move(turnAwayDegrees);
         setTurnLeft(turnAwayDegrees); 
         movingOffset = movingOffset - 90; 
@@ -315,6 +333,8 @@ public class DuckBot3 extends TeamRobot
 
     private double[] calcDistance(double x1, double y1, double x2, double y2)
     {
+        //berechnet den Abstand zwischen zwei Punkten im Koordinatensystem 
+        //gibt deltaX, deltaY, und den direkten Abstand zwischen den zwei Punkten zurück
         double[] deltas = new double[3];
         deltas[0] = x2 - x1;
         deltas[1] = y2 - y1;

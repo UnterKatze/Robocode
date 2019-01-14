@@ -36,6 +36,7 @@ public class ScannedRobots
     }
 
     public double calcPriority()
+            //schwächere robots werden eher vermieden?
     {
         if (currentEnergy < 25)
         {

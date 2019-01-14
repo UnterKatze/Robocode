@@ -1,8 +1,6 @@
 package SittingDucks;
 
 import java.awt.Color;
-import static java.awt.Color.*;
-import java.io.IOException;
 import static java.lang.Math.PI;
 import java.util.HashMap;
 import java.util.Set;
@@ -115,7 +113,7 @@ public class DuckBot4 extends TeamRobot
             }
             else
             {
-                setTurnRadarRightRadians(0.25*PI*scanDirection);
+                setTurnRadarRightRadians(0.20*PI*scanDirection);
 //              einen Gegner mit dem Radar verfolgen, wenn <2 Gegner im Spiel sind
             }
         }
@@ -174,11 +172,7 @@ public class DuckBot4 extends TeamRobot
                 force = (p.strength * GravEnemy.calcPriority()) / Math.pow(GravEnemy.distance, 2);
                 xForce = Math.sin(enemyAbsoluteBearingRadians) * force + xForce;
                 yForce = Math.cos(enemyAbsoluteBearingRadians) * force + yForce;
-            }
-//            } else
-//            {
-//                GravEnemy.alive = false; //nicht mehr benötigt?
-//            }
+            }            
         }
         distanceToMiddleXY = calcDistance(getX(), getY(), BattleFieldMidPointX, BattleFieldMidPointY);
         distanceToTeammate = calcDistance(getX(), getY(), Teammate.PresentX, Teammate.PresentY);
@@ -188,6 +182,7 @@ public class DuckBot4 extends TeamRobot
         {
             counter = 0;
             midpointPower = (Math.random() * 500) - 250;
+            //zufällige Anziehung, oder Abstoßung ausgehend vom Spielfeldmittelpunkt
         }
 
         force = midpointPower / Math.pow(distanceToMiddleXY[2], 2);
@@ -198,6 +193,7 @@ public class DuckBot4 extends TeamRobot
             xForce = -xForce;
             yForce = -yForce;
           //  force = force / 4; //kraft für agressivemode evtl noch stärker?
+          //kraft zwischen Teammates evtl schwächer machen für besseres einkreisen der Gegner
         }
 
         xForce = xForce + force * (BattleFieldMidPointX - getX());
@@ -235,7 +231,7 @@ public class DuckBot4 extends TeamRobot
     @Override
     public void onHitRobot(HitRobotEvent e)
     {
-        turnAwayDegrees = -turnAwayDegrees;
+        //turnAwayDegrees = -turnAwayDegrees;
         //move(turnAwayDegrees);
         setTurnLeft(turnAwayDegrees); 
         movingOffset = movingOffset - 90; 
