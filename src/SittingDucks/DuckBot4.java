@@ -8,7 +8,6 @@ import robocode.*;
 
 public class DuckBot4 extends TeamRobot
 {
-
     HashMap<String, ScannedRobots> targets;
     ScannedRobots targetedEnemy;
     double firepower = 1, midpointPower = 250, movingOffset = 0;
@@ -18,7 +17,6 @@ public class DuckBot4 extends TeamRobot
     double turnAwayDegrees = 90;
     int scanDirection = 1;
     
-
     @Override
     public void run()
     {
@@ -55,10 +53,8 @@ public class DuckBot4 extends TeamRobot
     
     @Override
     public void onMessageReceived(MessageEvent e)
-    
     {
         if (e.getMessage() instanceof Color[])
-        
         {
             Color[] robotColors = (Color[]) e.getMessage();
             setColors(robotColors[0], robotColors[1], robotColors[2], robotColors[3], robotColors[4]);  
@@ -122,7 +118,6 @@ public class DuckBot4 extends TeamRobot
         {
             setTurnRadarRightRadians(2 * PI); 
         }
-
     }
 
     private void calcFirePower()
@@ -236,8 +231,6 @@ public class DuckBot4 extends TeamRobot
         setTurnLeft(turnAwayDegrees); 
         movingOffset = movingOffset - 90; 
         setAhead(movingOffset);
-        
-        
     }
 
     private double normaliseAngle(double x, double y)
@@ -323,7 +316,6 @@ public class DuckBot4 extends TeamRobot
         double bulletImpactTime, bulletTravelDistanceX, bulletTravelDistanceY;
         double enemyTravelDistance, enemyTravelDistanceX, enemyTravelDistanceY;
         double enemyFuturePositionX, enemyFuturePositionY;
-        double bulletHelpingAngleRadians;
         double absoluteShootingAngleRadians = 0, absoluteShootingAngleDegrees, relativeShootingAngle;
         double myGunHeading = getGunHeading();
 
@@ -406,9 +398,6 @@ public class DuckBot4 extends TeamRobot
                 {
                     teamMateAlive = false;
                 }
-        
         targets.get(e.getName()).alive = false;
-    }
-    
-    
+    }  
 }

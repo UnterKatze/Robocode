@@ -36,7 +36,7 @@ public class ScannedRobots
     }
 
     public double calcPriority()
-            //schwächere robots werden eher vermieden?
+            //Robots mit hoher Energie bewirken eine höhere Abstoßung als welche mit niedriger
     {
         if (currentEnergy < 25)
         {
