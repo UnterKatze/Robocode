@@ -10,7 +10,6 @@ import robocode.*;
 
 public class DuckBot3 extends TeamRobot
 {
-
     HashMap<String, ScannedRobots> targets;
     ScannedRobots targetedEnemy;
     double firepower = 1, midpointPower = 250, movingOffset = 0;
@@ -246,20 +245,18 @@ public class DuckBot3 extends TeamRobot
         //aus den X- und Y-Kompenten wird ein ein Winkel für die Bewegungsrichtung des Robots ausgerechnet 
         movingAngleRadians = normaliseAngle(xForce, yForce);
         movingAngleDegrees = Math.toDegrees(movingAngleRadians);
-
+        
         move(movingAngleDegrees);
     }
 
     @Override
     public void onHitRobot(HitRobotEvent e)
     {
-       // turnAwayDegrees = -turnAwayDegrees;
+        //turnAwayDegrees = -turnAwayDegrees;
         //move(turnAwayDegrees);
         setTurnLeft(turnAwayDegrees); 
         movingOffset = movingOffset - 90; 
         setAhead(movingOffset);
-        
-        
     }
 
     private double normaliseAngle(double x, double y)
@@ -303,7 +300,6 @@ public class DuckBot3 extends TeamRobot
             {
                 moveToAngleDegrees = 360.0 - moveToAngleDegrees;
                 setTurnLeft(moveToAngleDegrees);
-
             } else
             {
                 moveToAngleDegrees = 360 - Math.abs(moveToAngleDegrees);
@@ -347,7 +343,6 @@ public class DuckBot3 extends TeamRobot
         double bulletImpactTime, bulletTravelDistanceX, bulletTravelDistanceY;
         double enemyTravelDistance, enemyTravelDistanceX, enemyTravelDistanceY;
         double enemyFuturePositionX, enemyFuturePositionY;
-        double bulletHelpingAngleRadians;
         double absoluteShootingAngleRadians = 0, absoluteShootingAngleDegrees, relativeShootingAngle;
         double myGunHeading = getGunHeading();
 
@@ -405,7 +400,6 @@ public class DuckBot3 extends TeamRobot
             {
                 relativeShootingAngle = 360.0 - relativeShootingAngle;
                 setTurnGunLeft(relativeShootingAngle);
-
             } else
             {
                 relativeShootingAngle = 360.0 - Math.abs(relativeShootingAngle);
@@ -430,9 +424,6 @@ public class DuckBot3 extends TeamRobot
                 {
                     teamMateAlive = false;
                 }
-        
          targets.get(e.getName()).alive = false;
-    }
-    
-    
+    }   
 }
