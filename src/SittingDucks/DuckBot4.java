@@ -40,7 +40,7 @@ public class DuckBot4 extends TeamRobot
 //              offset wird für verschieden weit zurückzulegende Distanzen, bspw bei Zusammenstoß mit anderen Bots verändert, 
 //              nach 20 Ticks wird er wieder auf 0 gesetzt
             }
-            aggressiveMode = ((getOthers() <= 3) && teamMateAlive);
+            aggressiveMode = (((getOthers() <= 3) && teamMateAlive)||(getOthers()== 1));
 //              wenn nur noch 2 oder weniger Gegner in der Arena sind und
 //              und beide Teamkollegen am Leben sind,
 //              wird in einen aggresiven Modus umgeschaltet
@@ -95,7 +95,8 @@ public class DuckBot4 extends TeamRobot
         
         if ((ScEnemy.distance <= targetedEnemy.distance || (targetedEnemy.alive == false)) && ScEnemy.isEnemy)
         {
-            targetedEnemy = ScEnemy;
+            targetedEnemy = ScEnemy; //im AggressiveMode werden manchmal gegner beschossen, die gar nicht anvisiert werden, 
+                                     //da die Distanz zu ihnen geringer ist, als die zum aktuell anvisierten, die angenommene zukünftige Position ist aber oft nicht mehr aktuell (targetetetEnemy für aggrmode ändern, oder drinlassen?)
         }
 //        gescannter Robot wird als anzuvisierender Gegner übernommen, 
 //        falls er näher als der vorher anvisierte Gegner ist, 
@@ -107,7 +108,7 @@ public class DuckBot4 extends TeamRobot
     {
         if (aggressiveMode)
         {
-            if (getTime() % 20 == 0 ) 
+            if ((getTime() % 20 == 0) && (getOthers() > 1)) 
             {
                 setTurnRadarRightRadians(2 * PI);    
             }
@@ -192,8 +193,7 @@ public class DuckBot4 extends TeamRobot
         {
             xForce = -xForce;
             yForce = -yForce;
-          //  force = force / 4; //kraft für agressivemode evtl noch stärker?
-          //kraft zwischen Teammates evtl schwächer machen für besseres einkreisen der Gegner
+            force = force / 4; //Anziehung von 
         }
 
         xForce = xForce + force * (BattleFieldMidPointX - getX());

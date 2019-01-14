@@ -31,22 +31,21 @@ public class DuckBot3 extends TeamRobot
         Color[] robotColors =
         {
             black, yellow, black, yellow, black
-        };    // body, gun, radar, bullets, scan-arc
+        };  // body, gun, radar, bullets, scan-arc
         
         setColors(robotColors[0], robotColors[1], robotColors[2], robotColors[3], robotColors[4]); 
         
-        setAdjustGunForRobotTurn(true);
-        setAdjustRadarForGunTurn(true);
-        setAdjustRadarForRobotTurn(true); 
-        
-        turnRadarLeftRadians(2 * PI); 
-
         try
         {
             broadcastMessage(robotColors); 
         } catch (IOException ignored)
         {
         }
+        setAdjustGunForRobotTurn(true);
+        setAdjustRadarForGunTurn(true);
+        setAdjustRadarForRobotTurn(true); 
+        
+        turnRadarLeftRadians(2 * PI); 
 
         while (true)
         {
@@ -56,7 +55,7 @@ public class DuckBot3 extends TeamRobot
 //              offset wird für verschieden weit zurückzulegende Distanzen, bspw bei Zusammenstoß mit anderen Bots verändert, 
 //              nach 20 Ticks wird er wieder auf 0 gesetzt
             }
-            aggressiveMode = ((getOthers() <= 3) && teamMateAlive);
+            aggressiveMode = (((getOthers() <= 3) && teamMateAlive)||(getOthers()== 1));
 //              wenn nur noch 2 oder weniger Gegner in der Arena sind
 //              und beide Teamkollegen am Leben sind,
 //              wird in einen aggresiven Modus umgeschaltet
@@ -73,7 +72,7 @@ public class DuckBot3 extends TeamRobot
     public void onScannedRobot(ScannedRobotEvent e)
     {
         // für aimlock in AgressiveMode
-        if (isTeammate(e.getName())==false)
+        if (!isTeammate(e.getName()))
         {
             scanDirection = -scanDirection;
         }
@@ -114,7 +113,7 @@ public class DuckBot3 extends TeamRobot
     {
         if (aggressiveMode)
         {
-            if (getTime() % 20 == 0 ) 
+            if ((getTime() % 20 == 0) && (getOthers() > 1))  
             {
                 setTurnRadarRightRadians(2 * PI);    
             }
@@ -181,7 +180,7 @@ public class DuckBot3 extends TeamRobot
                 GravityPoint p = new GravityPoint();
                 p.pointX = GravEnemy.PresentX;
                 p.pointY = GravEnemy.PresentY;
-                p.strength = -1250;
+                p.strength = -1550;
                 
                 enemyAbsoluteBearingRadians = GravEnemy.absoluteBearingRadians;
                 
@@ -204,16 +203,18 @@ public class DuckBot3 extends TeamRobot
 
         force = midpointPower / Math.pow(distanceToMiddleXY[2], 2);
         forceOnTeammate = -75 / Math.pow(distanceToTeammate[2], 2);
+        //Abstoßung von Teammate wird noch einmal extra gewichtet
 
         if (aggressive)
         {
             //unser Robot wird von den Gegnern angezogen, anstatt abgestoßen
             xForce = -xForce;
             yForce = -yForce;
-            force = force / 4;
+            force = force / 4; 
+            //Anziehungskraft von Mittelpunkt wird kleiner, dadurch wird die Bewegungsrichtung mehr von den Gegnerrobotern bestimmt
         }
         
-        //abstoßung von Mittelpunkt wird zu errechnetem Wert hinzugefügt
+        //Abstoßung von Mittelpunkt wird zu errechnetem Wert hinzugefügt
         xForce = xForce + force * (BattleFieldMidPointX - getX());
         yForce = yForce + force * (BattleFieldMidPointY - getY());
         
@@ -347,7 +348,6 @@ public class DuckBot3 extends TeamRobot
         double bulletImpactTime, bulletTravelDistanceX, bulletTravelDistanceY;
         double enemyTravelDistance, enemyTravelDistanceX, enemyTravelDistanceY;
         double enemyFuturePositionX, enemyFuturePositionY;
-        double bulletHelpingAngleRadians;
         double absoluteShootingAngleRadians = 0, absoluteShootingAngleDegrees, relativeShootingAngle;
         double myGunHeading = getGunHeading();
 
