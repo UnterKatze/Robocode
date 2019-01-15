@@ -36,23 +36,22 @@ public class ScannedRobots
     }
 
     public double calcPriority()
-            //Robots mit hoher Energie bewirken eine höhere Abstoßung als welche mit niedriger
     {
         if (currentEnergy < 25)
         {
-            return priority = 3.0;
+            return priority = 1.0;
         }
         if (currentEnergy < 50)
         {
-            return priority = 1.5;
+            return priority = 1.25;
         }
         if (currentEnergy < 75)
         {
-            return priority = 1.25;
+            return priority = 1.5;
         }
         if (currentEnergy < 100)
         {
-            return priority = 1.0;
+            return priority = 3.0;
         }
         return priority = 1.0;
     }

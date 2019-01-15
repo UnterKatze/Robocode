@@ -1,23 +1,30 @@
 package SittingDucks;
 
-import java.awt.Color;
-import static java.awt.Color.*;
-import java.io.IOException;
 import static java.lang.Math.PI;
 import java.util.HashMap;
 import java.util.Set;
 import robocode.*;
 
-public class DuckBot3 extends TeamRobot
+public class DuckBot extends TeamRobot
 {
     HashMap<String, ScannedRobots> targets;
+    // gescannte Roboter werden in synchroniserter Liste abgelegt
+    
     ScannedRobots targetedEnemy;
+    // aktuell anvisierter Gegner
+    
     double firepower = 1, midpointPower = 250, movingOffset = 0;
     boolean aggressiveMode = false;
+    // sind nur noch 2 Gegner am Leben werden diese aggressiver verfolgt und beschossen
+    
     boolean teamMateAlive = true;
     int counter = 0;
+    // alle 10 counts wird die zufällige Anziehungs-, bzw. Abstoßungskraft neu berechnet
+    
     double turnAwayDegrees = 90;
     int scanDirection = 1;
+    // für das kontinuierliche Anvisieren eines Gegners, wird die Scan-Richtung zwischen 1 und -1 hin und hergeschaltet,
+    // sobald ein neues onScannedRobotEvent erzeugt wird
 
     @Override
     public void run()
@@ -27,19 +34,6 @@ public class DuckBot3 extends TeamRobot
         targetedEnemy.distance = 9999;
         targetedEnemy.alive = true;
         
-        Color[] robotColors =
-        {
-            black, yellow, black, yellow, black
-        };  // body, gun, radar, bullets, scan-arc
-        
-        setColors(robotColors[0], robotColors[1], robotColors[2], robotColors[3], robotColors[4]); 
-        
-        try
-        {
-            broadcastMessage(robotColors); 
-        } catch (IOException ignored)
-        {
-        }
         setAdjustGunForRobotTurn(true);
         setAdjustRadarForGunTurn(true);
         setAdjustRadarForRobotTurn(true); 
@@ -51,13 +45,11 @@ public class DuckBot3 extends TeamRobot
             if (getTime() % 20 == 0)
             {
                movingOffset = 0; 
-//              offset wird für verschieden weit zurückzulegende Distanzen, bspw bei Zusammenstoß mit anderen Bots verändert, 
-//              nach 20 Ticks wird er wieder auf 0 gesetzt
+               // offset wird für verschieden weit zurückzulegende Distanzen, bspw bei Zusammenstoß mit anderen Bots verändert, 
+               // nach 20 Ticks wird er wieder auf 0 gesetzt
             }
             aggressiveMode = (((getOthers() <= 3) && teamMateAlive)||(getOthers()== 1));
-//              wenn nur noch 2 oder weniger Gegner in der Arena sind
-//              und beide Teamkollegen am Leben sind,
-//              wird in einen aggresiven Modus umgeschaltet
+
             antiGravityMovement(aggressiveMode);
             scanForEnemys();
             calcFirePower();
@@ -80,7 +72,6 @@ public class DuckBot3 extends TeamRobot
         if (targets.containsKey(e.getName()))
         {
             ScEnemy = targets.get(e.getName()); 
-            //pointer auf scEnemy, (wenn ScEnemy aktualisiert wird, werden auch die Werte in der Hashmap aktualisiert
         } else
         {
             targets.put(e.getName(), ScEnemy);
@@ -96,19 +87,15 @@ public class DuckBot3 extends TeamRobot
         ScEnemy.relativeBearingRadians = e.getBearingRadians();
         ScEnemy.calcAbsoluteBearingRadians(getHeadingRadians());
         ScEnemy.calcPresentXY(getX(), getY());
-        //werte werden durch verlinkung direkt auch in Hashmap für entsprechenen Robot aktualisiert
+        // Werte werden durch Verlinkung direkt auch in Hashmap für entsprechenen Robot aktualisiert
         
         if ((ScEnemy.distance <= targetedEnemy.distance || (targetedEnemy.alive == false)) && ScEnemy.isEnemy)
         {
             targetedEnemy = ScEnemy;
         }
-//        gescannter Robot wird als anzuvisierender Gegner übernommen, 
-//        falls er näher als der vorher anvisierte Gegner ist, 
-//        oder der andere Gegner abgeschossen wurde
-//        und der gescannte Robot kein Teammate ist
     }
 
-    private void scanForEnemys()
+    protected void scanForEnemys()
     {
         if (aggressiveMode)
         {
@@ -119,17 +106,16 @@ public class DuckBot3 extends TeamRobot
             else
             {
                 setTurnRadarRightRadians(0.20*PI*scanDirection);
-//              einen Gegner mit dem Radar verfolgen, wenn <2 Gegner im Spiel sind
+                // einen Gegner mit dem Radar verfolgen
             }
         }
         else
         {
             setTurnRadarRightRadians(2 * PI); 
         }
-
     }
 
-    private void calcFirePower()
+    protected void calcFirePower()
     {
         firepower = 600 / targetedEnemy.distance;
         if (firepower < 0.1)
@@ -151,7 +137,7 @@ public class DuckBot3 extends TeamRobot
         }
     }
 
-    private void antiGravityMovement(boolean aggressive)
+    protected void antiGravityMovement(boolean aggressive)
     {
         ScannedRobots GravEnemy;
         ScannedRobots Teammate;
@@ -167,9 +153,10 @@ public class DuckBot3 extends TeamRobot
         
         double[] distanceToMiddleXY, distanceToTeammate;
         
-        Set enemyNames = targets.keySet(); //liste der Enemynames
+        Set enemyNames = targets.keySet(); 
+        // liste der Enemynames
 
-        //für jeden noch lebenden Robot wird ein GravityPoint erstellt 
+        // für jeden noch lebenden Robot wird ein GravityPoint erstellt 
         for (int i = 0; i <= enemyNames.size() - 1; i++) 
         {
             GravEnemy = targets.get(targets.keySet().toArray()[i]);
@@ -179,19 +166,20 @@ public class DuckBot3 extends TeamRobot
                 GravityPoint p = new GravityPoint();
                 p.pointX = GravEnemy.PresentX;
                 p.pointY = GravEnemy.PresentY;
-                p.strength = -1550;
+                p.strength = -1250;
                 
                 enemyAbsoluteBearingRadians = GravEnemy.absoluteBearingRadians;
                 
-                force = (p.strength * GravEnemy.calcPriority()) / Math.pow(GravEnemy.distance, 2); //stärke nimmt bei größerer Entfernung ab, hängt ab von energy des gegners
-                xForce = Math.sin(enemyAbsoluteBearingRadians) * force + xForce; //kraft in x und y--Richtung wird für abhängig von jedem Gegner berechnet und aufaddiert
+                force = (p.strength * GravEnemy.calcPriority()) / Math.pow(GravEnemy.distance, 2); 
+                xForce = Math.sin(enemyAbsoluteBearingRadians) * force + xForce; 
                 yForce = Math.cos(enemyAbsoluteBearingRadians) * force + yForce;
+                // Abstoßungskraft in x und y--Richtung wird für jeden Gegner berechnet und aufaddiert
             }
         }
         
         distanceToMiddleXY = calcDistance(getX(), getY(), BattleFieldMidPointX, BattleFieldMidPointY); 
         distanceToTeammate = calcDistance(getX(), getY(), Teammate.PresentX, Teammate.PresentY);
-        //arrays mit deltaX, deltaY und direktem Abstand
+        
         
         counter++;
         if (counter >= 10)
@@ -202,27 +190,27 @@ public class DuckBot3 extends TeamRobot
 
         force = midpointPower / Math.pow(distanceToMiddleXY[2], 2);
         forceOnTeammate = -75 / Math.pow(distanceToTeammate[2], 2);
-        //Abstoßung von Teammate wird noch einmal extra gewichtet
+        // Abstoßung von Teammate wird noch einmal extra gewichtet
 
         if (aggressive)
         {
-            //unser Robot wird von den Gegnern angezogen, anstatt abgestoßen
             xForce = -xForce;
             yForce = -yForce;
+            // unser Robot wird von den Gegnern angezogen, anstatt abgestoßen 
+            
             force = force / 4; 
-            //Anziehungskraft von Mittelpunkt wird kleiner, dadurch wird die Bewegungsrichtung mehr von den Gegnerrobotern bestimmt
+            // Anziehungskraft von Mittelpunkt wird kleiner, dadurch wird die Bewegungsrichtung mehr von den Gegnerrobotern bestimmt
         }
         
-        //Abstoßung von Mittelpunkt wird zu errechnetem Wert hinzugefügt
         xForce = xForce + force * (BattleFieldMidPointX - getX());
         yForce = yForce + force * (BattleFieldMidPointY - getY());
+        // Abstoßung von Mittelpunkt wird zu errechnetem Wert hinzugefügt
         
-        //abstoßung von Teammate wird hinzugefügt
         xForce = xForce + forceOnTeammate * (Teammate.PresentX - getX());
         yForce = yForce + forceOnTeammate * (Teammate.PresentY - getY());
+        // Abstoßung von Teammate wird hinzugefügt
 
-        //wenn der Robot einer Wand zu nahe kommt wird der Kraft eine Komponente in X- bzw in Y-Richtung hinzugefügt, die von der Wand weggerichtet ist
-        //je näher der Robot zur Wand ist desto stärker wird er abgestoßen
+       
         if (getX() < 150)
         {
             xForce = xForce + 3000 / Math.pow(getX(), 2);
@@ -242,10 +230,12 @@ public class DuckBot3 extends TeamRobot
         {
             yForce = yForce - 3000 / Math.pow(getBattleFieldHeight() - getY(), 2);
         }
-        
-        //aus den X- und Y-Kompenten wird ein ein Winkel für die Bewegungsrichtung des Robots ausgerechnet 
+        // wenn der Robot einer Wand zu nahe kommt wird der Kraft eine Komponente in X- bzw in Y-Richtung hinzugefügt, die von der Wand weggerichtet ist
+        // je näher der Robot zur Wand ist desto stärker wird er abgestoßen
+       
         movingAngleRadians = normaliseAngle(xForce, yForce);
         movingAngleDegrees = Math.toDegrees(movingAngleRadians);
+        //aus den X- und Y-Kompenten wird ein ein Winkel für die Bewegungsrichtung des Robots ausgerechnet 
         
         move(movingAngleDegrees);
     }
@@ -253,17 +243,15 @@ public class DuckBot3 extends TeamRobot
     @Override
     public void onHitRobot(HitRobotEvent e)
     {
-        //turnAwayDegrees = -turnAwayDegrees;
-        //move(turnAwayDegrees);
         setTurnLeft(turnAwayDegrees); 
         movingOffset = movingOffset - 90; 
         setAhead(movingOffset);
     }
 
-    private double normaliseAngle(double x, double y)
+    protected double normaliseAngle(double x, double y)
     {
-        //aus einer X- und einer Y-Koordinate, wird ein winkel zwischen -180 und 180 bzw. -PI und PI berechnet
-        //noch hinzufügen->>wie kommen X und Y Koordinaten zustande?
+        // aus einer X- und einer Y-Koordinate, wird ein winkel zwischen -180 und 180 bzw. -PI und PI berechnet
+        
         double angleRadians = 0;
         if ((x >= 0) && (y >= 0))
         {
@@ -288,7 +276,7 @@ public class DuckBot3 extends TeamRobot
         return angleRadians;
     }
 
-    private void move(double angleDegrees)
+    protected void move(double angleDegrees)
     {
         double moveToAngleDegrees;
         double myHeading = getHeading();
@@ -323,12 +311,12 @@ public class DuckBot3 extends TeamRobot
         setAhead(20 + movingOffset);
     }
 
-    private void shoot()
+    protected void shoot()
     {
         setFire(firepower);
     }
 
-    private double[] calcDistance(double x1, double y1, double x2, double y2)
+    protected double[] calcDistance(double x1, double y1, double x2, double y2)
     {
         //berechnet den Abstand zwischen zwei Punkten im Koordinatensystem 
         //gibt deltaX, deltaY, und den direkten Abstand zwischen den zwei Punkten zurück
@@ -339,7 +327,7 @@ public class DuckBot3 extends TeamRobot
         return deltas;
     }
 
-    private void calcShootingAngle()
+    protected void calcShootingAngle()
     {
         double bulletImpactTime, bulletTravelDistanceX, bulletTravelDistanceY;
         double enemyTravelDistance, enemyTravelDistanceX, enemyTravelDistanceY;
