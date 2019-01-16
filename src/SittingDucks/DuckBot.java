@@ -32,6 +32,8 @@ public class DuckBot extends TeamRobot
         targets = new HashMap<>();
         targetedEnemy = new ScannedRobots();
         targetedEnemy.distance = 9999;
+        // Distanz des ersten "Gegeners" ist 9999, damit dieser nicht fälschlicherweise am Anfang anvisiert wird.
+        
         targetedEnemy.alive = true;
         
         setAdjustGunForRobotTurn(true);
@@ -39,6 +41,7 @@ public class DuckBot extends TeamRobot
         setAdjustRadarForRobotTurn(true); 
         
         turnRadarLeftRadians(2 * PI); 
+        // Zu Beginn wird einmal ein 360 Grad scan durchgeführt, um alle Gegner zu erfassen
 
         while (true)
         {
@@ -62,10 +65,10 @@ public class DuckBot extends TeamRobot
     @Override
     public void onScannedRobot(ScannedRobotEvent e)
     {
-        // für aimlock in AgressiveMode
         if (!isTeammate(e.getName()))
         {
             scanDirection = -scanDirection;
+            // für kontinuierliches Anvisieren im AgressiveMode
         }
         
         ScannedRobots ScEnemy = new ScannedRobots();
@@ -76,6 +79,7 @@ public class DuckBot extends TeamRobot
         {
             targets.put(e.getName(), ScEnemy);
         }
+        // Check ob der gescannte Gegner schon früher gescannt wurde
         ScEnemy.name = e.getName();
         ScEnemy.alive = true;
         ScEnemy.isEnemy = !(isTeammate(e.getName()));
@@ -87,34 +91,36 @@ public class DuckBot extends TeamRobot
         ScEnemy.relativeBearingRadians = e.getBearingRadians();
         ScEnemy.calcAbsoluteBearingRadians(getHeadingRadians());
         ScEnemy.calcPresentXY(getX(), getY());
-        // Werte werden durch Verlinkung direkt auch in Hashmap für entsprechenen Robot aktualisiert
+        // Werte werden durch Verlinkung direkt in der Hashmap für entsprechenden Robot aktualisiert
         
         if ((ScEnemy.distance <= targetedEnemy.distance || (targetedEnemy.alive == false)) && ScEnemy.isEnemy)
         {
             targetedEnemy = ScEnemy;
+            // Wenn der jetzt gescannte Gegner näher als der nähste vorher gescannte Gegner ist, wird dieser anvisiert
         }
     }
 
     protected void scanForEnemys()
     {
-        if (aggressiveMode)
+        if ((getOthers() == 1) || (getOthers() == 2 && teamMateAlive)) 
         {
-            if ((getTime() % 20 == 0) && (getOthers() > 1))  
+            setTurnRadarRightRadians(0.20*PI*scanDirection);
+            // einen Gegner mit dem Radar verfolgen
+            if (getTime() % 20 == 0)
             {
-                setTurnRadarRightRadians(2 * PI);    
+                setTurnRadarRightRadians(2 * PI);
             }
-            else
-            {
-                setTurnRadarRightRadians(0.20*PI*scanDirection);
-                // einen Gegner mit dem Radar verfolgen
-            }
-        }
-        else
+        } else
         {
-            setTurnRadarRightRadians(2 * PI); 
+            setTurnRadarRightRadians(2 * PI);
         }
     }
-
+    
+    /* 
+        Diese Methode berechnet die Geschossgröße anhand des Abstandes zum anvisierten
+        Gegner. Die Geschossgröße wird außerdem bei geringer Eigen- sowie Gegnerenergie
+        verringert.
+    */
     protected void calcFirePower()
     {
         firepower = 600 / targetedEnemy.distance;
@@ -136,30 +142,42 @@ public class DuckBot extends TeamRobot
             firepower = firepower * 0.5;
         }
     }
-
+    
+    /*
+        Alle Bewegungsabläufe der Roboter werden hier berechnet. Es werden Anziehungs- oder
+        Abstoßungspunkte anhand der Position der Gegnerroboter, der Spielfeldmitte und der
+        Spielfeldwände generiert.
+    */
     protected void antiGravityMovement(boolean aggressive)
     {
         ScannedRobots GravEnemy;
         ScannedRobots Teammate;
         
-        Teammate = targets.get(getTeammates()[0]); //teammate wird doppelt in gravitypoint-berechnung mit einbezogen?
+        double xForce = 0, yForce = 0, force;
         
-        double xForce = 0, yForce = 0, force, forceOnTeammate;
+        if (targets.get(getTeammates()) != null)
+        {
+            Teammate = targets.get(getTeammates()[0]);
+            // Informationen über den Teamroboter werden temporär übertragen
+            double[] distanceToTeammate = calcDistance(getX(), getY(), Teammate.PresentX, Teammate.PresentY);
+            double forceOnTeammate = -75 / Math.pow(distanceToTeammate[2], 2);
+            // Abstoßung von Teammate wird noch einmal extra gewichtet
         
-        double enemyAbsoluteBearingRadians, movingAngleRadians, movingAngleDegrees;
+            xForce = xForce + forceOnTeammate * (Teammate.PresentX - getX());
+            yForce = yForce + forceOnTeammate * (Teammate.PresentY - getY());
+            // Abstoßung von Teammate wird hinzugefügt
+        }
         
         final double BattleFieldMidPointX = getBattleFieldWidth() / 2;
         final double BattleFieldMidPointY = getBattleFieldHeight() / 2;
         
-        double[] distanceToMiddleXY, distanceToTeammate;
-        
         Set enemyNames = targets.keySet(); 
         // liste der Enemynames
 
-        // für jeden noch lebenden Robot wird ein GravityPoint erstellt 
         for (int i = 0; i <= enemyNames.size() - 1; i++) 
         {
             GravEnemy = targets.get(targets.keySet().toArray()[i]);
+            // für jeden noch lebenden Robot wird ein GravityPoint erstellt
             
             if (GravEnemy.alive) 
             {
@@ -168,30 +186,28 @@ public class DuckBot extends TeamRobot
                 p.pointY = GravEnemy.PresentY;
                 p.strength = -1250;
                 
-                enemyAbsoluteBearingRadians = GravEnemy.absoluteBearingRadians;
+                double enemyAbsoluteBearingRadians = GravEnemy.absoluteBearingRadians;
                 
                 force = (p.strength * GravEnemy.calcPriority()) / Math.pow(GravEnemy.distance, 2); 
                 xForce = Math.sin(enemyAbsoluteBearingRadians) * force + xForce; 
                 yForce = Math.cos(enemyAbsoluteBearingRadians) * force + yForce;
-                // Abstoßungskraft in x und y--Richtung wird für jeden Gegner berechnet und aufaddiert
+                // Abstoßungskraft in x und y Richtung wird für jeden Gegner berechnet und aufaddiert
             }
         }
         
-        distanceToMiddleXY = calcDistance(getX(), getY(), BattleFieldMidPointX, BattleFieldMidPointY); 
-        distanceToTeammate = calcDistance(getX(), getY(), Teammate.PresentX, Teammate.PresentY);
-        
+        double[] distanceToMiddleXY = calcDistance(getX(), getY(), BattleFieldMidPointX, BattleFieldMidPointY); 
+        // Abstand zur Spielfeldmitte wird berechnet
         
         counter++;
         if (counter >= 10)
         {
             counter = 0;
             midpointPower = (Math.random() * 500) - 250;
+            // Berechnung der zufälligen Anziehungs-/ Anstoßungskraft vom Mittelpunkt von -250 bis +250
         }
 
         force = midpointPower / Math.pow(distanceToMiddleXY[2], 2);
-        forceOnTeammate = -75 / Math.pow(distanceToTeammate[2], 2);
-        // Abstoßung von Teammate wird noch einmal extra gewichtet
-
+        
         if (aggressive)
         {
             xForce = -xForce;
@@ -204,13 +220,8 @@ public class DuckBot extends TeamRobot
         
         xForce = xForce + force * (BattleFieldMidPointX - getX());
         yForce = yForce + force * (BattleFieldMidPointY - getY());
-        // Abstoßung von Mittelpunkt wird zu errechnetem Wert hinzugefügt
+        // Abstoßung oder Anziehung vom Mittelpunkt wird zu dem errechnetem Wert hinzugefügt
         
-        xForce = xForce + forceOnTeammate * (Teammate.PresentX - getX());
-        yForce = yForce + forceOnTeammate * (Teammate.PresentY - getY());
-        // Abstoßung von Teammate wird hinzugefügt
-
-       
         if (getX() < 150)
         {
             xForce = xForce + 3000 / Math.pow(getX(), 2);
@@ -230,12 +241,12 @@ public class DuckBot extends TeamRobot
         {
             yForce = yForce - 3000 / Math.pow(getBattleFieldHeight() - getY(), 2);
         }
-        // wenn der Robot einer Wand zu nahe kommt wird der Kraft eine Komponente in X- bzw in Y-Richtung hinzugefügt, die von der Wand weggerichtet ist
+        // wenn der Robot einer Wand zu nahe kommt, wird der Kraft eine Komponente in X- bzw in Y-Richtung hinzugefügt, die von der Wand weggerichtet ist
         // je näher der Robot zur Wand ist desto stärker wird er abgestoßen
        
-        movingAngleRadians = normaliseAngle(xForce, yForce);
-        movingAngleDegrees = Math.toDegrees(movingAngleRadians);
-        //aus den X- und Y-Kompenten wird ein ein Winkel für die Bewegungsrichtung des Robots ausgerechnet 
+        double movingAngleRadians = normaliseAngle(xForce, yForce);
+        double movingAngleDegrees = Math.toDegrees(movingAngleRadians);
+        // Aus der X und Y Komponente der Kraft wird der Winkel in Grad errechnet
         
         move(movingAngleDegrees);
     }
@@ -248,10 +259,11 @@ public class DuckBot extends TeamRobot
         setAhead(movingOffset);
     }
 
+    /*
+        Aus der X und der Y Komponente eines Vektors wird der Winkel zwischen -PI bis PI berechnet
+    */
     protected double normaliseAngle(double x, double y)
     {
-        // aus einer X- und einer Y-Koordinate, wird ein winkel zwischen -180 und 180 bzw. -PI und PI berechnet
-        
         double angleRadians = 0;
         if ((x >= 0) && (y >= 0))
         {
@@ -276,6 +288,10 @@ public class DuckBot extends TeamRobot
         return angleRadians;
     }
 
+    /*
+        Mit dem übergebenen Winkel wird die Fahrtrichtung für den nächsten Zug berechnet.
+        Wenn der Roboter einer Wand zu nahe kommt wird sofort abgebremst.
+    */
     protected void move(double angleDegrees)
     {
         double moveToAngleDegrees;
@@ -316,10 +332,13 @@ public class DuckBot extends TeamRobot
         setFire(firepower);
     }
 
+    /*
+        Diese Methode berechnet Abstände zwischen zwei Punkten in einer X-Y Ebene.
+        Sie gibt ein Array der Länge 3 zurück mit Informationen über deltaX, deltaY und
+        dem Abstand der zwei Punkte.
+    */
     protected double[] calcDistance(double x1, double y1, double x2, double y2)
     {
-        //berechnet den Abstand zwischen zwei Punkten im Koordinatensystem 
-        //gibt deltaX, deltaY, und den direkten Abstand zwischen den zwei Punkten zurück
         double[] deltas = new double[3];
         deltas[0] = x2 - x1;
         deltas[1] = y2 - y1;
@@ -327,20 +346,21 @@ public class DuckBot extends TeamRobot
         return deltas;
     }
 
+    /*
+        Hier wird die vorraussichtliche Gegnerposition ein einem zukünftigen Zug berechnet und
+        die Kanone in diese Richtung gestellt. Die Berechnungen gehen von einer linearen
+        Bewegung des Gegnerroboters mit gleichbleibender Geschwindigkeit aus.
+    */
     protected void calcShootingAngle()
     {
-        double bulletImpactTime, bulletTravelDistanceX, bulletTravelDistanceY;
-        double enemyTravelDistance, enemyTravelDistanceX, enemyTravelDistanceY;
-        double enemyFuturePositionX, enemyFuturePositionY;
-        double absoluteShootingAngleRadians = 0, absoluteShootingAngleDegrees, relativeShootingAngle;
+        double absoluteShootingAngleRadians = 0;
         double myGunHeading = getGunHeading();
-
-        bulletImpactTime = getTime() + targetedEnemy.distance / (20 - (3 * firepower));
-        enemyTravelDistance = targetedEnemy.velocity * (bulletImpactTime - targetedEnemy.scanTime);
-        enemyTravelDistanceX = enemyTravelDistance * Math.sin(targetedEnemy.headingRadians);
-        enemyTravelDistanceY = enemyTravelDistance * Math.cos(targetedEnemy.headingRadians);
-        enemyFuturePositionX = targetedEnemy.PresentX + enemyTravelDistanceX;
-        enemyFuturePositionY = targetedEnemy.PresentY + enemyTravelDistanceY;
+        double bulletImpactTime = getTime() + targetedEnemy.distance / (20 - (3 * firepower));
+        double enemyTravelDistance = targetedEnemy.velocity * (bulletImpactTime - targetedEnemy.scanTime);
+        double enemyTravelDistanceX = enemyTravelDistance * Math.sin(targetedEnemy.headingRadians);
+        double enemyTravelDistanceY = enemyTravelDistance * Math.cos(targetedEnemy.headingRadians);
+        double enemyFuturePositionX = targetedEnemy.PresentX + enemyTravelDistanceX;
+        double enemyFuturePositionY = targetedEnemy.PresentY + enemyTravelDistanceY;
 
         if (enemyFuturePositionX < 0)
         {
@@ -359,8 +379,8 @@ public class DuckBot extends TeamRobot
             enemyFuturePositionY = getBattleFieldHeight();
         }
         
-        bulletTravelDistanceX = enemyFuturePositionX - getX();
-        bulletTravelDistanceY = enemyFuturePositionY - getY();
+        double bulletTravelDistanceX = enemyFuturePositionX - getX();
+        double bulletTravelDistanceY = enemyFuturePositionY - getY();
 
         if ((bulletTravelDistanceX >= 0) && (bulletTravelDistanceY >= 0))
         {
@@ -379,9 +399,8 @@ public class DuckBot extends TeamRobot
             absoluteShootingAngleRadians = Math.abs(Math.atan(bulletTravelDistanceX / bulletTravelDistanceY) + 2 * PI);
         }
 
-        absoluteShootingAngleDegrees = Math.toDegrees(absoluteShootingAngleRadians);
-
-        relativeShootingAngle = absoluteShootingAngleDegrees - myGunHeading;
+        double absoluteShootingAngleDegrees = Math.toDegrees(absoluteShootingAngleRadians);
+        double relativeShootingAngle = absoluteShootingAngleDegrees - myGunHeading;
 
         if (Math.abs(relativeShootingAngle) > 180)
         {
