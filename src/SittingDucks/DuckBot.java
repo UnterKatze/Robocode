@@ -8,7 +8,7 @@ import robocode.*;
 public class DuckBot extends TeamRobot
 {
     HashMap<String, ScannedRobots> targets;
-    // gescannte Roboter werden in synchroniserter Liste abgelegt LAL
+    // gescannte Roboter werden in synchroniserter Liste abgelegt
     
     ScannedRobots targetedEnemy;
     // aktuell anvisierter Gegner
