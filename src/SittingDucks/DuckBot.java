@@ -116,13 +116,14 @@ public class DuckBot extends TeamRobot
         }
     }
     
+    
+    protected void calcFirePower()
+    {
     /* 
         Diese Methode berechnet die Geschossgröße anhand des Abstandes zum anvisierten
         Gegner. Die Geschossgröße wird außerdem bei geringer Eigen- sowie Gegnerenergie
         verringert.
     */
-    protected void calcFirePower()
-    {
         firepower = 600 / targetedEnemy.distance;
         if (firepower < 0.1)
         {
@@ -143,13 +144,14 @@ public class DuckBot extends TeamRobot
         }
     }
     
+    
+    protected void antiGravityMovement(boolean aggressive)
+    {
     /*
         Alle Bewegungsabläufe der Roboter werden hier berechnet. Es werden Anziehungs- oder
         Abstoßungspunkte anhand der Position der Gegnerroboter, der Spielfeldmitte und der
         Spielfeldwände generiert.
     */
-    protected void antiGravityMovement(boolean aggressive)
-    {
         ScannedRobots GravEnemy;
         ScannedRobots Teammate;
         
@@ -259,11 +261,12 @@ public class DuckBot extends TeamRobot
         setAhead(movingOffset);
     }
 
+    
+    protected double normaliseAngle(double x, double y)
+    {
     /*
         Aus der X und der Y Komponente eines Vektors wird der Winkel zwischen -PI bis PI berechnet
     */
-    protected double normaliseAngle(double x, double y)
-    {
         double angleRadians = 0;
         if ((x >= 0) && (y >= 0))
         {
@@ -288,12 +291,13 @@ public class DuckBot extends TeamRobot
         return angleRadians;
     }
 
+   
+    protected void move(double angleDegrees)
+    {
     /*
         Mit dem übergebenen Winkel wird die Fahrtrichtung für den nächsten Zug berechnet.
         Wenn der Roboter einer Wand zu nahe kommt wird sofort abgebremst.
     */
-    protected void move(double angleDegrees)
-    {
         double moveToAngleDegrees;
         double myHeading = getHeading();
 
@@ -332,13 +336,14 @@ public class DuckBot extends TeamRobot
         setFire(firepower);
     }
 
+    
+    protected double[] calcDistance(double x1, double y1, double x2, double y2)
+    {
     /*
         Diese Methode berechnet Abstände zwischen zwei Punkten in einer X-Y Ebene.
         Sie gibt ein Array der Länge 3 zurück mit Informationen über deltaX, deltaY und
         dem Abstand der zwei Punkte.
     */
-    protected double[] calcDistance(double x1, double y1, double x2, double y2)
-    {
         double[] deltas = new double[3];
         deltas[0] = x2 - x1;
         deltas[1] = y2 - y1;
@@ -346,13 +351,14 @@ public class DuckBot extends TeamRobot
         return deltas;
     }
 
+   
+    protected void calcShootingAngle()
+    {
     /*
         Hier wird die vorraussichtliche Gegnerposition ein einem zukünftigen Zug berechnet und
         die Kanone in diese Richtung gestellt. Die Berechnungen gehen von einer linearen
         Bewegung des Gegnerroboters mit gleichbleibender Geschwindigkeit aus.
     */
-    protected void calcShootingAngle()
-    {
         double absoluteShootingAngleRadians = 0;
         double myGunHeading = getGunHeading();
         double bulletImpactTime = getTime() + targetedEnemy.distance / (20 - (3 * firepower));
