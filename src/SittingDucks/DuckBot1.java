@@ -21,7 +21,7 @@ public class DuckBot1 extends DuckBot
         catch (IOException ignored) 
         {
         }
-        // Teamfarben werden versucht dem Teamkollegen zu übermitteln
+        // Teamfarben werden dem Teamkollegen zu übermittelt
 
         super.run();
         // Die run() Methode der abgeleiteten Klasse wird ausgeführt
